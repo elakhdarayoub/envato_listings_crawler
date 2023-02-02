@@ -3,6 +3,7 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 from time import sleep
 import requests
+import os
 
 #Starts the driver and goes to our starting webpage
 ## use the webdriver version that corresponds to your browsers version
@@ -12,7 +13,7 @@ driver.get('https://elements.envato.com/graphic-templates/print-templates+ux-and
 
 #This loop goes through every page and grabs all the details of each listing
 #Loop will only end when there are no more pages to go through
-while True:  
+while True:
     #Imports the HTML of the current page into python
     soup = BeautifulSoup(driver.page_source, 'lxml')
     soup2 = BeautifulSoup(driver.page_source, 'lxml')
@@ -30,38 +31,39 @@ while True:
         
         #grabing the header to use it later into file naming
         header = soup.find('h1', class_ = 'D9ao138P').text
-        header = header.replace(' ', '_')
-        
+        unwanted_characters = [' ', '/', '|', '<' , '>' , '*' , '\\' ,'?','"',':']
+        for c in unwanted_characters:
+            if c in header:
+                header = header.replace(c, '_')
         #grabing the all the tags and put them in file.txt with the same naming as the header
         tags = soup.find_all('a', class_ = 'd0KA3Wtv')
+        
+        #creating the folder
         try:
-            with open(f"C:/Users/user/Desktop/envato_crawler/{header}.txt", "a") as f:
+            os.mkdir(f"C:/Users/user/Desktop/envato_crawler/{header}")
+            with open(f"C:/Users/user/Desktop/envato_crawler/{header}/{header}.txt", "a") as f:
                 #change path with the location you want
                 for tag in tags:
                     f.write(tag.text+'\n')
                 f.close()
-        except FileNotFoundError:
-            header = header.replace('/','-')
-            with open(f"C:/Users/user/Desktop/envato_crawler/{header}.txt", "a") as f:
-                #change path with the location you want
-                for tag in tags:
-                    f.write(tag.text+'\n')
-                f.close()
+        except FileExistsError:
+            continue
+                
         #clicking on the image to start getting all the other images
         driver.find_element_by_xpath('//*[@id="app"]/div[1]/main/div/div[1]/section[1]/div[2]/div/div[1]/div/div/div[3]/img').click()
         soup = BeautifulSoup(driver.page_source, 'lxml')
         images = soup.find_all('button', class_ = 'OaSBRYFO')
         for i in range(1, len(images)+1):
-            if i > 1:
+            try:
                 driver.find_element_by_xpath(f'/html/body/div[9]/div/div/div/div[1]/div[2]/div/button[{i}]/div').click()
                 sleep(1)
-            try:
                 soup = BeautifulSoup(driver.page_source, 'lxml')
-                image = soup.find('img', class_ = 'AjQn4Il1 undefined').get('srcset')
+                rtrn = soup.find('img', class_ = 'AjQn4Il1 undefined').get('srcset')
+                img = rtrn.split(',')
+                image = img[len(img)-1].split(' ')[1]
                 response = requests.get(image)
-                sleep(1)
                 if response.status_code:
-                    fp = open(f'C:/Users/user/Desktop/envato_crawler/{header}{i}.avif', 'wb') #change path with the location you want
+                    fp = open(f'C:/Users/user/Desktop/envato_crawler/{header}/{i}.avif', 'wb') #change path with the location you want
                     fp.write(response.content)
                     fp.close()
             except AttributeError:
