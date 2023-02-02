@@ -52,16 +52,16 @@ while True:
         soup = BeautifulSoup(driver.page_source, 'lxml')
         images = soup.find_all('button', class_ = 'OaSBRYFO')
         for i in range(1, len(images)+1):
-            sleep(1)
             if i > 1:
                 driver.find_element_by_xpath(f'/html/body/div[9]/div/div/div/div[1]/div[2]/div/button[{i}]/div').click()
+                sleep(1)
             try:
                 soup = BeautifulSoup(driver.page_source, 'lxml')
                 image = soup.find('img', class_ = 'AjQn4Il1 undefined').get('srcset')
                 response = requests.get(image)
                 sleep(1)
                 if response.status_code:
-                    fp = open(f'C:/Users/user/Desktop/envato_crawler/{header}{i}.png', 'wb') #change path with the location you want
+                    fp = open(f'C:/Users/user/Desktop/envato_crawler/{header}{i}.avif', 'wb') #change path with the location you want
                     fp.write(response.content)
                     fp.close()
             except AttributeError:
